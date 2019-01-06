@@ -15,17 +15,17 @@ public class LocalProxy implements LocalPipe.Listener, LocalControl.Listener {
     private final int remotePort;
     private String targetHost;
     private final int targetPort;
-    private final int max;
+    private final int controlPort;
     private Set<LocalPipe> works = Collections.synchronizedSet(new HashSet<LocalPipe>());
 
     private LinkedBlockingQueue<Integer> enableList = new LinkedBlockingQueue<>();
 
-    public LocalProxy(String remoteHost, int remotePort, String targetHost, int targetPort, int max) {
+    public LocalProxy(String remoteHost, int remotePort, String targetHost, int targetPort, int controlPort) {
         this.remoteHost = remoteHost;
         this.remotePort = remotePort;
         this.targetHost = targetHost;
         this.targetPort = targetPort;
-        this.max = max;
+        this.controlPort = controlPort;
     }
 
     //java -jar LocalProxy-all.jar 18.223.238.245 8100 localhost 8098
@@ -37,7 +37,7 @@ public class LocalProxy implements LocalPipe.Listener, LocalControl.Listener {
         int remotePort = 8100;
         String targetHost = "18.223.238.245";
         int targetPort = 8098;
-        int max = 1;
+        int controlPort = 8563;
         if (args.length >= 4) {
             remoteHost = args[0];
             remotePort = Integer.valueOf(args[1]);
@@ -46,18 +46,20 @@ public class LocalProxy implements LocalPipe.Listener, LocalControl.Listener {
         }
 
         if (args.length >= 5) {
-            max = Integer.valueOf(args[4]);
+            controlPort = Integer.valueOf(args[4]);
         }
 
-        new LocalProxy(remoteHost, remotePort, targetHost, targetPort, max).start();
+
+
+        new LocalProxy(remoteHost, remotePort, targetHost, targetPort, controlPort).start();
     }
 
     private void start() throws IOException {
         Logger.d("local start");
 
-        new LocalControl(remoteHost, 8563, this).start();
+        new LocalControl(remoteHost, controlPort, this).start();
         while (true) {
-            if (works.size() < max) {
+            if (works.size() < 1) {
                 try {
                     createWorker();
                 } catch (Exception e) {

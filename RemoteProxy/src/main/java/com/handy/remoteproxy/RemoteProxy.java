@@ -18,11 +18,13 @@ public class RemoteProxy implements SocketServer.Listener {
 
     private final int publicPort;
     private final int privatePort;
+    private final int controlPort;
     private RemoteControl remoteControl;
 
-    public RemoteProxy(int publicPort, int privatePort) {
+    public RemoteProxy(int publicPort, int privatePort, int controlPort) {
         this.publicPort = publicPort;
         this.privatePort = privatePort;
+        this.controlPort = controlPort;
     }
 
     //java -jar RemoteProxy-all.jar 8098 8100
@@ -31,17 +33,22 @@ public class RemoteProxy implements SocketServer.Listener {
 
         int publicPort = 8098;
         int privatePort = 8100;
+        int controlPort = 8563;
 
         if (args.length > 1) {
             publicPort = Integer.valueOf(args[0]);
             privatePort = Integer.valueOf(args[1]);
         }
-        new RemoteProxy(publicPort, privatePort).start();
+
+        if (args.length > 2) {
+            controlPort = Integer.valueOf(args[2]);
+        }
+        new RemoteProxy(publicPort, privatePort, controlPort).start();
     }
 
     private void start() throws IOException, InterruptedException {
         Logger.d("remote start");
-        remoteControl = new RemoteControl(8563);
+        remoteControl = new RemoteControl(controlPort);
         remoteControl.start();
         new Thread(new Runnable() {
             @Override
