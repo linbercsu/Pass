@@ -16,6 +16,7 @@ public class RemoteProxy implements SocketServer.Listener {
 
     private final int publicPort;
     private final int privatePort;
+    private RemoteControl remoteControl;
 
     public RemoteProxy(int publicPort, int privatePort) {
         this.publicPort = publicPort;
@@ -23,7 +24,7 @@ public class RemoteProxy implements SocketServer.Listener {
     }
 
     //java -jar RemoteProxy-all.jar 8098 8100
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         int publicPort = 8098;
         int privatePort = 8100;
 
@@ -34,8 +35,10 @@ public class RemoteProxy implements SocketServer.Listener {
         new RemoteProxy(publicPort, privatePort).start();
     }
 
-    private void start() throws IOException {
+    private void start() throws IOException, InterruptedException {
         System.out.println("remote start");
+        remoteControl = new RemoteControl(4563);
+        remoteControl.start();
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -84,6 +87,11 @@ public class RemoteProxy implements SocketServer.Listener {
 
     private void forward(Socket socket) throws IOException, InterruptedException {
         System.out.println("remote new connection");
+
+        if (localList.size() < 5) {
+            remoteControl.requestWork(5);
+        }
+
         RemotePipe local = localList.take();
         local.pipe(socket);
     }

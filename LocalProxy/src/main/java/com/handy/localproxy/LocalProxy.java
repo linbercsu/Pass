@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class LocalProxy implements LocalPipe.Listener {
+public class LocalProxy implements LocalPipe.Listener, LocalControl.Listener {
 
     private final String remoteHost;
     private final int remotePort;
@@ -33,7 +33,7 @@ public class LocalProxy implements LocalPipe.Listener {
         int remotePort = 8100;
         String targetHost = "18.223.238.245";
         int targetPort = 8098;
-        int max = 10;
+        int max = 1;
         if (args.length >= 4) {
             remoteHost = args[0];
             remotePort = Integer.valueOf(args[1]);
@@ -45,20 +45,17 @@ public class LocalProxy implements LocalPipe.Listener {
             max = Integer.valueOf(args[4]);
         }
 
-        new LocalProxy(remoteHost, remotePort, targetHost, targetPort,  max).start();
+        new LocalProxy(remoteHost, remotePort, targetHost, targetPort, max).start();
     }
 
     private void start() throws IOException {
         System.out.println("local start");
 
+        new LocalControl(remoteHost, 4563, this).start();
         while (true) {
             if (works.size() < max) {
                 try {
-                    Socket socket = new Socket(remoteHost, remotePort, null, 0);
-                    System.out.println("local new socket");
-                    LocalPipe localPipe = new LocalPipe(socket, this, targetHost, targetPort);
-                    works.add(localPipe);
-                    localPipe.start();
+                    createWorker();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -66,9 +63,28 @@ public class LocalProxy implements LocalPipe.Listener {
         }
     }
 
+    private void createWorker() throws IOException {
+        Socket socket = new Socket(remoteHost, remotePort, null, 0);
+        System.out.println("local new socket");
+        LocalPipe localPipe = new LocalPipe(socket, this, targetHost, targetPort);
+        works.add(localPipe);
+        localPipe.start();
+    }
+
     @Override
     public void onFinish(LocalPipe localPipe) {
         System.out.println("local socket finish");
         works.remove(localPipe);
+    }
+
+    @Override
+    public void onRequestNewWorks(int count) {
+        try {
+            for (int i = 0; i < count; i++) {
+                createWorker();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
