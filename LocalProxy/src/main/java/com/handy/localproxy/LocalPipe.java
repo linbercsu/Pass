@@ -1,5 +1,7 @@
 package com.handy.localproxy;
 
+import com.handy.common.Logger;
+
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +40,7 @@ public class LocalPipe {
                     Sink sink = null;
                     do {
                         read = source.read(buffer, 8192);
-                        System.out.println("local read " + read);
+                        Logger.v("local read %d", read);
                         if (read > 0) {
                             if (socket == null) {
 //                                timeout(source);
@@ -53,7 +55,7 @@ public class LocalPipe {
                                         try {
                                             pipe(socket, remote);
                                         } catch (Exception e) {
-                                            e.printStackTrace();
+                                            Logger.e(e);
                                             closeSafely(socket);
                                             closeSafely(remote);
                                         }
@@ -78,8 +80,7 @@ public class LocalPipe {
                     }
 
                 } catch (Exception e) {
-                    System.out.println("local exception " + e.getMessage());
-                    e.printStackTrace();
+                    Logger.e(e);
                 }
 
                 if (callback) {
@@ -99,7 +100,7 @@ public class LocalPipe {
         try {
             socket.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(e);
         }
     }
 
@@ -115,7 +116,7 @@ public class LocalPipe {
         long read;
         do {
             read = source.read(buffer, 8192);
-            System.out.println("local read2 " + read);
+            Logger.v("local read2 %d", read);
             if (read > 0) {
                 sink.write(buffer, read);
             }

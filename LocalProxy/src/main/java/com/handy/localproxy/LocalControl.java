@@ -1,5 +1,7 @@
 package com.handy.localproxy;
 
+import com.handy.common.Logger;
+
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
@@ -37,13 +39,13 @@ public class LocalControl implements Runnable {
                 try {
                     listen();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Logger.e(e);
                 }
 
                 closeSafely(socket);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(e);
         }
     }
 
@@ -74,7 +76,7 @@ public class LocalControl implements Runnable {
         try {
             socket.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(e);
         }
     }
 }

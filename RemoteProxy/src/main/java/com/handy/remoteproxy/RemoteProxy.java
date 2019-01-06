@@ -1,5 +1,7 @@
 package com.handy.remoteproxy;
 
+import com.handy.common.Logger;
+
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
@@ -25,6 +27,8 @@ public class RemoteProxy implements SocketServer.Listener {
 
     //java -jar RemoteProxy-all.jar 8098 8100
     public static void main(String[] args) throws IOException, InterruptedException {
+        Logger.init(Logger.D);
+
         int publicPort = 8098;
         int privatePort = 8100;
 
@@ -36,7 +40,7 @@ public class RemoteProxy implements SocketServer.Listener {
     }
 
     private void start() throws IOException, InterruptedException {
-        System.out.println("remote start");
+        Logger.d("remote start");
         remoteControl = new RemoteControl(8563);
         remoteControl.start();
         new Thread(new Runnable() {
@@ -45,7 +49,7 @@ public class RemoteProxy implements SocketServer.Listener {
                 connectionSocket = new SocketServer(privatePort, new SocketServer.Listener() {
                     @Override
                     public void onNewConnection(Socket client) {
-                        System.out.println("remote new client " + localList.size());
+                        Logger.d("remote new client %d", localList.size());
                         RemotePipe local = new RemotePipe(client);
                         localList.add(local);
                     }
@@ -53,7 +57,7 @@ public class RemoteProxy implements SocketServer.Listener {
                 try {
                     connectionSocket.start();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Logger.e(e);
                 }
             }
         }).start();
@@ -73,9 +77,9 @@ public class RemoteProxy implements SocketServer.Listener {
                 try {
                     handleRequest(socket);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Logger.e(e);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    Logger.e(e);
                 }
             }
         });
@@ -86,7 +90,7 @@ public class RemoteProxy implements SocketServer.Listener {
     }
 
     private void forward(Socket socket) throws IOException, InterruptedException {
-        System.out.println("remote new connection");
+        Logger.d("remote new connection");
 
         if (localList.size() < 5) {
             remoteControl.requestWork(5);

@@ -1,5 +1,7 @@
 package com.handy.remoteproxy;
 
+import com.handy.common.Logger;
+
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
@@ -23,7 +25,7 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
     }
 
     public void requestWork(final int count) {
-        System.out.println("requestWork " + count);
+        Logger.d("requestWork %d", count);
         executorService.submit(new Runnable() {
             @Override
             public void run() {
@@ -34,7 +36,7 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
                             try {
                                 lock.wait();
                             } catch (InterruptedException e) {
-                                e.printStackTrace();
+                                Logger.e(e);
                             }
                         }
 
@@ -45,14 +47,14 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
                     try {
                         requestWorkInternal(client, count);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Logger.e(e);
 
                         synchronized (lock) {
                             if (client == RemoteControl.this.client) {
                                 try {
                                     RemoteControl.this.client.close();
                                 } catch (Exception e1) {
-                                    e1.printStackTrace();
+                                    Logger.e(e1);
                                 }
 
                                 RemoteControl.this.client = null;
@@ -70,7 +72,7 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
     }
 
     private void requestWorkInternal(Socket socket, int count) throws IOException {
-        System.out.println("requestWorkInternal " + count);
+        Logger.d("requestWorkInternal %d", count);
         BufferedSink sink = Okio.buffer(Okio.sink(socket));
         sink.writeLong(MAGIC_NUMBER);
 
@@ -100,7 +102,7 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
         try {
             new SocketServer(port, this).start();
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(e);
             throw new RuntimeException(e);
         }
     }

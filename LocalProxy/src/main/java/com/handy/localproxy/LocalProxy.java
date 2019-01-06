@@ -1,5 +1,7 @@
 package com.handy.localproxy;
 
+import com.handy.common.Logger;
+
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Collections;
@@ -29,6 +31,8 @@ public class LocalProxy implements LocalPipe.Listener, LocalControl.Listener {
     //java -jar LocalProxy-all.jar 18.223.238.245 8100 localhost 8098
 
     public static void main(String[] args) throws IOException {
+        Logger.init(Logger.D);
+
         String remoteHost = "192.168.199.102";
         int remotePort = 8100;
         String targetHost = "18.223.238.245";
@@ -49,7 +53,7 @@ public class LocalProxy implements LocalPipe.Listener, LocalControl.Listener {
     }
 
     private void start() throws IOException {
-        System.out.println("local start");
+        Logger.d("local start");
 
         new LocalControl(remoteHost, 8563, this).start();
         while (true) {
@@ -57,7 +61,7 @@ public class LocalProxy implements LocalPipe.Listener, LocalControl.Listener {
                 try {
                     createWorker();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Logger.e(e);
                 }
             }
         }
@@ -65,7 +69,7 @@ public class LocalProxy implements LocalPipe.Listener, LocalControl.Listener {
 
     private void createWorker() throws IOException {
         Socket socket = new Socket(remoteHost, remotePort, null, 0);
-        System.out.println("local new socket");
+        Logger.d("local new socket");
         LocalPipe localPipe = new LocalPipe(socket, this, targetHost, targetPort);
         works.add(localPipe);
         localPipe.start();
@@ -73,7 +77,7 @@ public class LocalProxy implements LocalPipe.Listener, LocalControl.Listener {
 
     @Override
     public void onFinish(LocalPipe localPipe) {
-        System.out.println("local socket finish");
+        Logger.d("local socket finish");
         works.remove(localPipe);
     }
 
@@ -84,7 +88,7 @@ public class LocalProxy implements LocalPipe.Listener, LocalControl.Listener {
                 createWorker();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(e);
         }
     }
 }

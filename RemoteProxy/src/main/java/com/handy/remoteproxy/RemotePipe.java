@@ -1,5 +1,7 @@
 package com.handy.remoteproxy;
 
+import com.handy.common.Logger;
+
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
@@ -24,7 +26,7 @@ public class RemotePipe {
                 try {
                     pipe(socket, RemotePipe.this.client);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Logger.e(e);
                     closeSafely(socket);
                     closeSafely(client);
                 }
@@ -37,7 +39,7 @@ public class RemotePipe {
                 try {
                     pipe(RemotePipe.this.client, socket);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Logger.e(e);
                     closeSafely(client);
                     closeSafely(socket);
                 }
@@ -53,7 +55,7 @@ public class RemotePipe {
         long read;
         do {
             read = source.read(buffer, 8192);
-            System.out.println("remote read = " + read);
+            Logger.v("remote read %d", read);
             if (read > 0) {
                 sink.write(buffer, read);
             }
@@ -72,7 +74,7 @@ public class RemotePipe {
         try {
             socket.close();
         }catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(e);
         }
     }
 
