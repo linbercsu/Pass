@@ -22,6 +22,7 @@ public class RemoteProxy implements SocketServer.Listener {
         this.privatePort = privatePort;
     }
 
+    //java -jar RemoteProxy-all.jar 8098 8100
     public static void main(String[] args) throws IOException {
         int publicPort = 8098;
         int privatePort = 8100;

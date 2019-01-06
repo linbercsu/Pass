@@ -23,9 +23,10 @@ public class RemotePipe {
             public void run() {
                 try {
                     pipe(socket, RemotePipe.this.client);
-
                 } catch (IOException e) {
                     e.printStackTrace();
+                    closeSafely(socket);
+                    closeSafely(client);
                 }
             }
         }).start();
@@ -37,20 +38,9 @@ public class RemotePipe {
                     pipe(RemotePipe.this.client, socket);
                 } catch (IOException e) {
                     e.printStackTrace();
+                    closeSafely(client);
+                    closeSafely(socket);
                 }
-
-                try {
-                    client.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
             }
         }).start();
     }
@@ -71,6 +61,24 @@ public class RemotePipe {
         } while (read > 0);
 
         sink.flush();
+
+        if (read == -1) {
+            closeOutput(targetSocket);
+
+        }
+    }
+
+    private void closeSafely(Socket socket) {
+        try {
+            socket.close();
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void closeOutput(Socket socket) throws IOException {
+        if (socket != null && !socket.isOutputShutdown())
+            socket.shutdownOutput();
     }
 
     private void timeout(Source source) {

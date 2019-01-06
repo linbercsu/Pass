@@ -54,15 +54,9 @@ public class LocalPipe {
                                             pipe(socket, remote);
                                         } catch (Exception e) {
                                             e.printStackTrace();
+                                            closeSafely(socket);
+                                            closeSafely(remote);
                                         }
-
-                                        try {
-                                            socket.close();
-                                        } catch (Exception e) {
-                                            e.printStackTrace();
-                                        }
-
-                                        closeRemote();
 
                                         listener.onFinish(LocalPipe.this);
                                     }
@@ -73,10 +67,14 @@ public class LocalPipe {
                         }
 
                         buffer.clear();
-                    }while (read > 0);
+                    } while (read > 0);
 
                     if (sink != null) {
                         sink.flush();
+                    }
+
+                    if (read == -1) {
+                        closeOutput(socket);
                     }
 
                 } catch (Exception e) {
@@ -85,7 +83,6 @@ public class LocalPipe {
                 }
 
                 if (callback) {
-                    closeRemote();
                     listener.onFinish(LocalPipe.this);
                 }
             }
@@ -93,9 +90,14 @@ public class LocalPipe {
 
     }
 
-    private void closeRemote() {
+    private void closeOutput(Socket socket) throws IOException {
+        if (socket != null && !socket.isOutputShutdown())
+            socket.shutdownOutput();
+    }
+
+    private void closeSafely(Socket socket) {
         try {
-            remote.close();
+            socket.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -107,7 +109,7 @@ public class LocalPipe {
 
     private void pipe(Socket sourceSocket, Socket targetSocket) throws IOException {
         Source source = Okio.source(sourceSocket);
-        timeout(source);
+//        timeout(source);
         Sink sink = Okio.sink(targetSocket);
         Buffer buffer = new Buffer();
         long read;
@@ -121,5 +123,9 @@ public class LocalPipe {
         } while (read > 0);
 
         sink.flush();
+
+        if (read == -1) {
+            closeOutput(targetSocket);
+        }
     }
 }
