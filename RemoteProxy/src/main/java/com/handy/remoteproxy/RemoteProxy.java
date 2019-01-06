@@ -37,7 +37,7 @@ public class RemoteProxy implements SocketServer.Listener {
 
     private void start() throws IOException, InterruptedException {
         System.out.println("remote start");
-        remoteControl = new RemoteControl(4563);
+        remoteControl = new RemoteControl(8563);
         remoteControl.start();
         new Thread(new Runnable() {
             @Override
