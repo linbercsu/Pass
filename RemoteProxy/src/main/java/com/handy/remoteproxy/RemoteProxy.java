@@ -7,8 +7,9 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
-public class RemoteProxy implements SocketServer.Listener {
+public class RemoteProxy implements SocketServer.Listener, RemotePipe.Listener {
 
     SocketServer server;
     private ExecutorService executorService;
@@ -29,7 +30,7 @@ public class RemoteProxy implements SocketServer.Listener {
 
     //java -jar RemoteProxy-all.jar 8098 8100
     public static void main(String[] args) throws IOException, InterruptedException {
-        Logger.init(Logger.D);
+        Logger.init(Logger.V);
 
         int publicPort = 8098;
         int privatePort = 8100;
@@ -57,7 +58,7 @@ public class RemoteProxy implements SocketServer.Listener {
                     @Override
                     public void onNewConnection(Socket client) {
                         Logger.d("remote new client %d", localList.size());
-                        RemotePipe local = new RemotePipe(client);
+                        RemotePipe local = new RemotePipe(RemoteProxy.this, client);
                         localList.add(local);
                     }
                 });
@@ -83,10 +84,13 @@ public class RemoteProxy implements SocketServer.Listener {
             public void run() {
                 try {
                     handleRequest(socket);
-                } catch (IOException e) {
+                } catch (Exception e) {
                     Logger.e(e);
-                } catch (InterruptedException e) {
-                    Logger.e(e);
+                    try {
+                        socket.close();
+                    } catch (Exception e2) {
+
+                    }
                 }
             }
         });
@@ -103,7 +107,15 @@ public class RemoteProxy implements SocketServer.Listener {
             remoteControl.requestWork(5);
         }
 
-        RemotePipe local = localList.take();
+        RemotePipe local = localList.poll(10, TimeUnit.SECONDS);
+        if (local == null) {
+            throw new IOException("No client proxy before timeout.");
+        }
         local.pipe(socket);
+    }
+
+    @Override
+    public void onPipeError(RemotePipe pipe) {
+        localList.remove(pipe);
     }
 }

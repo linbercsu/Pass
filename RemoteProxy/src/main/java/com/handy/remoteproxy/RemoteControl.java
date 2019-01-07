@@ -26,6 +26,11 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
 
     public void requestWork(final int count) {
         Logger.d("requestWork %d", count);
+        synchronized (lock) {
+            if (client == null)
+                return;
+        }
+
         executorService.submit(new Runnable() {
             @Override
             public void run() {
