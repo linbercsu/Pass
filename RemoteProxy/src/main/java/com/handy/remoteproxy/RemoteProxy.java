@@ -7,7 +7,9 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RemoteProxy implements SocketServer.Listener, RemotePipe.Listener {
 
@@ -51,7 +53,7 @@ public class RemoteProxy implements SocketServer.Listener, RemotePipe.Listener {
         Logger.d("remote start");
         remoteControl = new RemoteControl(controlPort);
         remoteControl.start();
-        new Thread(new Runnable() {
+        Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 connectionSocket = new SocketServer(privatePort, new SocketServer.Listener() {
@@ -68,9 +70,19 @@ public class RemoteProxy implements SocketServer.Listener, RemotePipe.Listener {
                     Logger.e(e);
                 }
             }
-        }).start();
+        });
+        thread.setName("control connection");
+        thread.start();
 
-        executorService = Executors.newCachedThreadPool();
+        executorService = Executors.newCachedThreadPool(new ThreadFactory() {
+            AtomicInteger count = new AtomicInteger(0);
+            @Override
+            public Thread newThread(Runnable runnable) {
+                Thread thread = new Thread(runnable);
+                thread.setName("connection " + count.incrementAndGet());
+                return thread;
+            }
+        });
         server = new SocketServer(publicPort, this);
         server.start();
 

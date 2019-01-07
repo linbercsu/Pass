@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -20,7 +21,14 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
 
     public RemoteControl(int port) {
         this.port = port;
-        executorService = Executors.newSingleThreadExecutor();
+        executorService = Executors.newSingleThreadExecutor(new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable runnable) {
+                Thread thread = new Thread(runnable);
+                thread.setName("control");
+                return thread;
+            }
+        });
         lock = new Object();
     }
 

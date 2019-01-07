@@ -23,7 +23,7 @@ public class RemotePipe {
         this.listener = listener;
         this.client = client;
 
-        new Thread(new Runnable() {
+        Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -35,13 +35,15 @@ public class RemotePipe {
                     listener.onPipeError(RemotePipe.this);
                 }
             }
-        }).start();
+        });
+        thread.setName("pipeWait:" + this.hashCode());
+        thread.start();
     }
 
 
     public void pipe(final Socket socket) throws IOException {
         setSocket(socket);
-        new Thread(new Runnable() {
+        Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -52,7 +54,9 @@ public class RemotePipe {
                     closeSafely(client);
                 }
             }
-        }).start();
+        });
+        thread.setName("pipe:" + this.hashCode());
+        thread.start();
     }
 
     public synchronized void setSocket(Socket socket) {
