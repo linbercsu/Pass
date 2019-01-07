@@ -32,7 +32,7 @@ public class RemoteProxy implements SocketServer.Listener, RemotePipe.Listener {
 
     //java -jar RemoteProxy-all.jar 8098 8100
     public static void main(String[] args) throws IOException, InterruptedException {
-        Logger.init(Logger.V);
+        Logger.init(Logger.D);
 
         int publicPort = 8098;
         int privatePort = 8100;
@@ -60,6 +60,16 @@ public class RemoteProxy implements SocketServer.Listener, RemotePipe.Listener {
                     @Override
                     public void onNewConnection(Socket client) {
                         Logger.d("remote new client %d", localList.size());
+                        if (localList.size() > 10) {
+                            try {
+                                client.close();
+                            }catch (Exception e) {
+
+                            }
+
+                            return;
+                        }
+
                         RemotePipe local = new RemotePipe(RemoteProxy.this, client);
                         localList.add(local);
                     }

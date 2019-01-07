@@ -18,6 +18,7 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
     private Socket client;
     private final ExecutorService executorService;
     private final Object lock;
+    private volatile boolean requesting;
 
     public RemoteControl(int port) {
         this.port = port;
@@ -33,53 +34,48 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
     }
 
     public void requestWork(final int count) {
-        Logger.d("requestWork %d", count);
+        Logger.d("requestWork %d %b", count, requesting);
+        if (requesting)
+            return;
+
         synchronized (lock) {
             if (client == null)
                 return;
         }
 
+        requesting = true;
         executorService.submit(new Runnable() {
             @Override
             public void run() {
-                while (true) {
-                    Socket client;
-                    synchronized (lock) {
-                        while (RemoteControl.this.client == null) {
-                            try {
-                                lock.wait();
-                            } catch (InterruptedException e) {
-                                Logger.e(e);
-                            }
-                        }
 
-                        client = RemoteControl.this.client;
-                    }
+                Socket client;
+                synchronized (lock) {
+                    if (RemoteControl.this.client == null)
+                        return;
 
-
-                    try {
-                        requestWorkInternal(client, count);
-                    } catch (Exception e) {
-                        Logger.e(e);
-
-                        synchronized (lock) {
-                            if (client == RemoteControl.this.client) {
-                                try {
-                                    RemoteControl.this.client.close();
-                                } catch (Exception e1) {
-                                    Logger.e(e1);
-                                }
-
-                                RemoteControl.this.client = null;
-                            }
-                        }
-
-                        continue;
-                    }
-
-                    break;
-
+                    client = RemoteControl.this.client;
                 }
+
+                try {
+                    requestWorkInternal(client, count);
+                } catch (Exception e) {
+                    Logger.e(e);
+                    try {
+                        RemoteControl.this.client.close();
+                    } catch (Exception e1) {
+//                        Logger.e(e1);
+                    }
+                    try {
+                        client.close();
+                    } catch (Exception e1) {
+//                        Logger.e(e1);
+                    }
+                    synchronized (lock) {
+                        RemoteControl.this.client = null;
+                    }
+                }
+
+                requesting = false;
             }
         });
     }

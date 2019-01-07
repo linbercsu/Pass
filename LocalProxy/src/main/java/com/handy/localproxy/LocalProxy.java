@@ -58,15 +58,15 @@ public class LocalProxy implements LocalPipe.Listener, LocalControl.Listener {
         Logger.d("local start");
 
         new LocalControl(remoteHost, controlPort, this).start();
-        while (true) {
-            if (works.size() < 1) {
-                try {
-                    createWorker();
-                } catch (Exception e) {
-                    Logger.e(e);
-                }
-            }
-        }
+//        while (true) {
+//            if (works.size() < 1) {
+//                try {
+//                    createWorker();
+//                } catch (Exception e) {
+//                    Logger.e(e);
+//                }
+//            }
+//        }
     }
 
     private void createWorker() throws IOException {
@@ -85,6 +85,7 @@ public class LocalProxy implements LocalPipe.Listener, LocalControl.Listener {
 
     @Override
     public void onRequestNewWorks(int count) {
+        Logger.d("onRequestNewWorks %d", count);
         try {
             for (int i = 0; i < count; i++) {
                 createWorker();
