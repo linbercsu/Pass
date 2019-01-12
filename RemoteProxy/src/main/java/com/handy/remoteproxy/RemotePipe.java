@@ -14,6 +14,7 @@ public class RemotePipe {
     final Listener listener;
     final Socket client;
     private Socket socket;
+    private volatile int finish;
 
     public interface Listener {
         void onPipeError(RemotePipe pipe);
@@ -34,6 +35,9 @@ public class RemotePipe {
                     closeSafely(getSocket());
                     listener.onPipeError(RemotePipe.this);
                 }
+
+                finish++;
+                onFinish();
             }
         });
         thread.setName("pipeWait:" + this.hashCode());
@@ -53,10 +57,21 @@ public class RemotePipe {
                     closeSafely(socket);
                     closeSafely(client);
                 }
+
+                finish++;
+                onFinish();
             }
         });
         thread.setName("pipe:" + this.hashCode());
         thread.start();
+    }
+
+    private void onFinish() {
+        if (finish < 2)
+            return;
+
+        closeSafely(socket);
+        closeSafely(client);
     }
 
     public synchronized void setSocket(Socket socket) {

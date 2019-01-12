@@ -16,10 +16,11 @@ public class LocalPipe {
         void onFinish(LocalPipe localPipe);
     }
     private final Socket remote;
-    Socket socket;
+    volatile Socket socket;
     private final Listener listener;
     private final String targetHost;
     private final int targetPort;
+    private volatile int finish;
 
     public LocalPipe(Socket remote, Listener listener, String targetHost, int targetPort) {
         this.remote = remote;
@@ -60,6 +61,9 @@ public class LocalPipe {
                                             closeSafely(remote);
                                         }
 
+                                        finish++;
+                                        onFinished();
+
                                         listener.onFinish(LocalPipe.this);
                                     }
                                 }).start();
@@ -83,12 +87,23 @@ public class LocalPipe {
                     Logger.e(e);
                 }
 
+                finish++;
+                onFinished();
+
                 if (callback) {
                     listener.onFinish(LocalPipe.this);
                 }
             }
         }).start();
 
+    }
+
+    private void onFinished() {
+        if (finish < 2)
+            return;
+
+        closeSafely(socket);
+        closeSafely(remote);
     }
 
     private void closeOutput(Socket socket) throws IOException {
@@ -98,7 +113,8 @@ public class LocalPipe {
 
     private void closeSafely(Socket socket) {
         try {
-            socket.close();
+            if (socket != null)
+                socket.close();
         } catch (Exception e) {
             Logger.e(e);
         }
