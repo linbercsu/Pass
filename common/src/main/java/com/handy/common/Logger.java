@@ -1,6 +1,7 @@
 package com.handy.common;
 
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 public class Logger {
     public static final int V = 0;
@@ -16,7 +17,7 @@ public class Logger {
         if (level > V)
             return;
 
-        String date = DateTime.now().toString();
+        String date = date();
         String format = String.format("V %s %s", date, message);
         System.out.println(format);
     }
@@ -32,10 +33,15 @@ public class Logger {
         if (level > D)
             return;
 
-        String date = DateTime.now().toString();
+        String date = date();
         String format = String.format("D %s %s", date, message);
         System.out.println(format);
     }
+
+    private static String date() {
+        return DateTime.now(DateTimeZone.UTC).toString();
+    }
+
     public static void d(String message, Object... args) {
         if (level > D)
             return;
@@ -45,7 +51,7 @@ public class Logger {
     }
 
     public static void e(String message) {
-        String date = DateTime.now().toString();
+        String date = date();
         String format = String.format("E %s %s", date, message);
         System.err.println(format);
     }

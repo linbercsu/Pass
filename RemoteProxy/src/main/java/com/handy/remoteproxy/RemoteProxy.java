@@ -2,6 +2,10 @@ package com.handy.remoteproxy;
 
 import com.handy.common.Logger;
 
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
+
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
@@ -18,38 +22,54 @@ public class RemoteProxy implements SocketServer.Listener, RemotePipe.Listener {
     private SocketServer connectionSocket;
 //    private RemotePipe local;
     private LinkedBlockingQueue<RemotePipe> localList = new LinkedBlockingQueue<>();
-
-    private final int publicPort;
-    private final int privatePort;
-    private final int controlPort;
     private RemoteControl remoteControl;
 
-    public RemoteProxy(int publicPort, int privatePort, int controlPort) {
-        this.publicPort = publicPort;
-        this.privatePort = privatePort;
-        this.controlPort = controlPort;
+    @Option(name="-p",usage="port visible to public.")
+    private int publicPort = 8222;
+    @Option(name="-w",usage="port used by worker.")
+    private int privatePort = 8100;
+    @Option(name="-c",usage="port used by controller.")
+    private int controlPort = 8563;
+
+    @Option(name="-s",usage="slient mode.")
+    private boolean slient;
+
+    public RemoteProxy() {
+//        this.publicPort = publicPort;
+//        this.privatePort = privatePort;
+//        this.controlPort = controlPort;
     }
 
     //java -jar RemoteProxy-all.jar 8098 8100
-    public static void main(String[] args) throws IOException, InterruptedException {
-        Logger.init(Logger.D);
+    public static void main(String[] args) throws IOException, InterruptedException, CmdLineException {
+        RemoteProxy proxy = new RemoteProxy();
+        CmdLineParser parser = new CmdLineParser(proxy);
+        parser.printUsage(System.out);
+        parser.parseArgument(args);
+        proxy.start();
 
-        int publicPort = 8098;
-        int privatePort = 8100;
-        int controlPort = 8563;
-
-        if (args.length > 1) {
-            publicPort = Integer.valueOf(args[0]);
-            privatePort = Integer.valueOf(args[1]);
-        }
-
-        if (args.length > 2) {
-            controlPort = Integer.valueOf(args[2]);
-        }
-        new RemoteProxy(publicPort, privatePort, controlPort).start();
+//        int publicPort = 8222;
+//        int privatePort = 8100;
+//        int controlPort = 8563;
+//
+//        if (args.length > 1) {
+//            publicPort = Integer.valueOf(args[0]);
+//            privatePort = Integer.valueOf(args[1]);
+//        }
+//
+//        if (args.length > 2) {
+//            controlPort = Integer.valueOf(args[2]);
+//        }
+//        new RemoteProxy(publicPort, privatePort, controlPort).start();
     }
 
     private void start() throws IOException, InterruptedException {
+        if (slient) {
+            Logger.init(Logger.D);
+        } else {
+            Logger.init(Logger.V);
+        }
+
         Logger.d("remote start");
         remoteControl = new RemoteControl(controlPort);
         remoteControl.start();
@@ -59,7 +79,7 @@ public class RemoteProxy implements SocketServer.Listener, RemotePipe.Listener {
                 connectionSocket = new SocketServer(privatePort, new SocketServer.Listener() {
                     @Override
                     public void onNewConnection(Socket client) {
-                        Logger.d("remote new client %d", localList.size());
+                        Logger.d("remote new worker %d", localList.size());
                         if (localList.size() > 10) {
                             try {
                                 client.close();
@@ -131,7 +151,7 @@ public class RemoteProxy implements SocketServer.Listener, RemotePipe.Listener {
 
         RemotePipe local = localList.poll(10, TimeUnit.SECONDS);
         if (local == null) {
-            throw new IOException("No client proxy before timeout.");
+            throw new IOException("No worker proxy before timeout.");
         }
         local.pipe(socket);
     }

@@ -12,27 +12,27 @@ import okio.Source;
 
 public class RemotePipe {
     final Listener listener;
-    final Socket client;
-    private Socket socket;
+    final Socket worker;
+    private Socket client;
     private volatile int finish;
 
     public interface Listener {
         void onPipeError(RemotePipe pipe);
     }
 
-    public RemotePipe(final Listener listener, final Socket client) {
+    public RemotePipe(final Listener listener, final Socket socket) {
         this.listener = listener;
-        this.client = client;
+        this.worker = socket;
 
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    waitToPipe(client);
+                    waitToPipeToClient();
                 } catch (IOException e) {
                     Logger.e(e);
-                    closeSafely(RemotePipe.this.client);
-                    closeSafely(getSocket());
+                    closeSafely(worker);
+                    closeSafely(getClient());
                     listener.onPipeError(RemotePipe.this);
                 }
 
@@ -46,16 +46,16 @@ public class RemotePipe {
 
 
     public void pipe(final Socket socket) throws IOException {
-        setSocket(socket);
+        setClient(socket);
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    pipe(socket, RemotePipe.this.client);
+                    pipeToWorker();
                 } catch (IOException e) {
                     Logger.e(e);
-                    closeSafely(socket);
-                    closeSafely(client);
+                    closeSafely(getClient());
+                    closeSafely(worker);
                 }
 
                 finish++;
@@ -66,23 +66,25 @@ public class RemotePipe {
         thread.start();
     }
 
-    private void onFinish() {
+    private synchronized void onFinish() {
         if (finish < 2)
             return;
 
-        closeSafely(socket);
-        closeSafely(client);
+        closeSafely(getClient());
+        closeSafely(worker);
     }
 
-    public synchronized void setSocket(Socket socket) {
-        this.socket = socket;
+    public synchronized void setClient(Socket client) {
+        this.client = client;
     }
 
-    public synchronized Socket getSocket() {
-        return socket;
+    public synchronized Socket getClient() {
+        return client;
     }
 
-    private void pipe(Socket sourceSocket, Socket targetSocket) throws IOException {
+    private void pipeToWorker() throws IOException {
+        Socket sourceSocket = getClient();
+        Socket targetSocket = worker;
         Source source = Okio.source(sourceSocket);
 //        timeout(source);
         Sink sink = Okio.sink(targetSocket);
@@ -90,7 +92,7 @@ public class RemotePipe {
         long read;
         do {
             read = source.read(buffer, 8192);
-            Logger.v("remote read1 %d", read);
+            Logger.v("read from client %d", read);
             if (read > 0) {
                 sink.write(buffer, read);
             }
@@ -104,20 +106,20 @@ public class RemotePipe {
 
         }
     }
-    private void waitToPipe(Socket sourceSocket) throws IOException {
-        Source source = Okio.source(sourceSocket);
+    private void waitToPipeToClient() throws IOException {
+        Source source = Okio.source(worker);
         Sink sink = null;
 //        Okio.sink(targetSocket);
         Buffer buffer = new Buffer();
         long read;
         do {
             read = source.read(buffer, 8192);
-            Logger.v("remote read2 %d", read);
+            Logger.v("read from worker %d", read);
             if (read > 0) {
                 if (sink == null) {
-                    Socket socket = getSocket();
+                    Socket socket = getClient();
                     if (socket == null) {
-                        throw new IOException("got data before pipe.");
+                        throw new IOException("got data from worker before pipe.");
                     } else {
                         sink = Okio.sink(socket);
 
@@ -129,13 +131,12 @@ public class RemotePipe {
         } while (read > 0);
 
         if (sink == null)
-            throw new IOException("socket end before pipe.");
+            throw new IOException("worker socket end before pipe.");
 
-        if (sink != null)
-            sink.flush();
+        sink.flush();
 
         if (read == -1) {
-            closeOutput(socket);
+            closeOutput(getClient());
         }
     }
 
