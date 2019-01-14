@@ -1,6 +1,7 @@
 package com.handy.remoteproxy;
 
 import com.handy.common.Logger;
+import com.handy.common.TimeoutSocket;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -22,7 +23,7 @@ public class RemotePipe {
 
     public RemotePipe(final Listener listener, final Socket socket) {
         this.listener = listener;
-        this.worker = socket;
+        this.worker = new TimeoutSocket(socket);
 
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -46,7 +47,7 @@ public class RemotePipe {
 
 
     public void pipe(final Socket socket) throws IOException {
-        setClient(socket);
+        setClient(new TimeoutSocket(socket));
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {

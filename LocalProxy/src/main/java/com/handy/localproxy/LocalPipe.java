@@ -1,6 +1,7 @@
 package com.handy.localproxy;
 
 import com.handy.common.Logger;
+import com.handy.common.TimeoutSocket;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -21,9 +22,10 @@ public class LocalPipe {
     private final String targetHost;
     private final int targetPort;
     private volatile int finish;
+    private volatile int finishMax = 1;
 
     public LocalPipe(Socket remote, Listener listener, String targetHost, int targetPort) {
-        this.remote = remote;
+        this.remote = new TimeoutSocket(remote);
         this.listener = listener;
         this.targetHost = targetHost;
         this.targetPort = targetPort;
@@ -46,13 +48,14 @@ public class LocalPipe {
                             if (socket == null) {
 //                                timeout(source);
 
-                                socket = new Socket(targetHost, targetPort, null, 0);
+                                socket = new TimeoutSocket(new Socket(targetHost, targetPort, null, 0));
                                 sink = Okio.sink(socket);
 
                                 callback = false;
                                 new Thread(new Runnable() {
                                     @Override
                                     public void run() {
+                                        finishMax++;
                                         try {
                                             pipe(socket, remote);
                                         } catch (Exception e) {
@@ -99,7 +102,7 @@ public class LocalPipe {
     }
 
     private void onFinished() {
-        if (finish < 2)
+        if (finish < finishMax)
             return;
 
         closeSafely(socket);

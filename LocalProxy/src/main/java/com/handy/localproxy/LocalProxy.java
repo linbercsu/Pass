@@ -31,12 +31,12 @@ public class LocalProxy implements LocalPipe.Listener, LocalControl.Listener {
     //java -jar LocalProxy-all.jar 18.223.238.245 8100 localhost 8098
 
     public static void main(String[] args) throws IOException {
-        Logger.init(Logger.D);
+        Logger.init(Logger.V);
 
-        String remoteHost = "192.168.199.102";
+        String remoteHost = "192.168.8.135";
         int remotePort = 8100;
-        String targetHost = "18.223.238.245";
-        int targetPort = 8098;
+        String targetHost = "192.168.8.135";
+        int targetPort = 22;
         int controlPort = 8563;
         if (args.length >= 4) {
             remoteHost = args[0];
