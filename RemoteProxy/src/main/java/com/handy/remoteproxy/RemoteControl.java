@@ -60,18 +60,8 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
                     requestWorkInternal(client, count);
                 } catch (Exception e) {
                     Logger.e(e);
-                    try {
-                        RemoteControl.this.client.close();
-                    } catch (Exception e1) {
-//                        Logger.e(e1);
-                    }
-                    try {
-                        client.close();
-                    } catch (Exception e1) {
-//                        Logger.e(e1);
-                    }
                     synchronized (lock) {
-                        RemoteControl.this.client = null;
+                        closeSafely(client);
                     }
                 }
 
@@ -119,8 +109,18 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
     @Override
     public void onNewConnection(Socket socket) {
         synchronized (lock) {
+            closeSafely(client);
             client = socket;
             lock.notifyAll();
+        }
+    }
+
+    private void closeSafely(Socket socket) {
+        try {
+            if (socket != null)
+                socket.close();
+        }catch (Exception e) {
+//            Logger.e(e);
         }
     }
 }
