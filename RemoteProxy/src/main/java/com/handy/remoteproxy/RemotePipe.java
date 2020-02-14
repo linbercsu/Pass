@@ -12,6 +12,7 @@ import okio.Sink;
 import okio.Source;
 
 public class RemotePipe {
+    public static final int BUFFER_SIZE = 8192 * 5;
     final Listener listener;
     final Socket worker;
     private Socket client;
@@ -86,13 +87,13 @@ public class RemotePipe {
     private void pipeToWorker() throws IOException {
         Socket sourceSocket = getClient();
         Socket targetSocket = worker;
-        Source source = Okio.source(sourceSocket);
+        Source source = Okio.source(sourceSocket.getInputStream());
 //        timeout(source);
-        Sink sink = Okio.sink(targetSocket);
+        Sink sink = Okio.sink(targetSocket.getOutputStream());
         Buffer buffer = new Buffer();
         long read;
         do {
-            read = source.read(buffer, 8192);
+            read = source.read(buffer, BUFFER_SIZE);
             Logger.v("read from client %d", read);
             if (read > 0) {
                 sink.write(buffer, read);
@@ -108,13 +109,13 @@ public class RemotePipe {
         }
     }
     private void waitToPipeToClient() throws IOException {
-        Source source = Okio.source(worker);
+        Source source = Okio.source(worker.getInputStream());
         Sink sink = null;
 //        Okio.sink(targetSocket);
         Buffer buffer = new Buffer();
         long read;
         do {
-            read = source.read(buffer, 8192);
+            read = source.read(buffer, BUFFER_SIZE);
             Logger.v("read from worker %d", read);
             if (read > 0) {
                 if (sink == null) {
@@ -122,7 +123,7 @@ public class RemotePipe {
                     if (socket == null) {
                         throw new IOException("got data from worker before pipe.");
                     } else {
-                        sink = Okio.sink(socket);
+                        sink = Okio.sink(socket.getOutputStream());
 
                     }
                 }

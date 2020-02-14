@@ -13,6 +13,9 @@ import okio.Sink;
 import okio.Source;
 
 public class LocalPipe {
+
+    public static final int BUFFER_SIZE = 8192 * 5;
+
     public interface Listener {
         void onFinish(LocalPipe localPipe);
     }
@@ -37,19 +40,19 @@ public class LocalPipe {
             public void run() {
                 boolean callback = true;
                 try {
-                    Source source = Okio.source(remote);
+                    Source source = Okio.source(remote.getInputStream());
                     Buffer buffer = new Buffer();
                     long read;
                     Sink sink = null;
                     do {
-                        read = source.read(buffer, 8192);
+                        read = source.read(buffer, BUFFER_SIZE);
                         Logger.v("local read %d", read);
                         if (read > 0) {
                             if (socket == null) {
 //                                timeout(source);
 
                                 socket = new TimeoutSocket(new Socket(targetHost, targetPort, null, 0));
-                                sink = Okio.sink(socket);
+                                sink = Okio.sink(socket.getOutputStream());
 
                                 callback = false;
                                 new Thread(new Runnable() {
@@ -128,13 +131,13 @@ public class LocalPipe {
     }
 
     private void pipe(Socket sourceSocket, Socket targetSocket) throws IOException {
-        Source source = Okio.source(sourceSocket);
+        Source source = Okio.source(sourceSocket.getInputStream());
 //        timeout(source);
-        Sink sink = Okio.sink(targetSocket);
+        Sink sink = Okio.sink(targetSocket.getOutputStream());
         Buffer buffer = new Buffer();
         long read;
         do {
-            read = source.read(buffer, 8192);
+            read = source.read(buffer, BUFFER_SIZE);
             Logger.v("local read2 %d", read);
             if (read > 0) {
                 sink.write(buffer, read);
