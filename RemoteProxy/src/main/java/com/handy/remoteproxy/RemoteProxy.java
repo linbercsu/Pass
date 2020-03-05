@@ -33,6 +33,10 @@ public class RemoteProxy implements SocketServer.Listener, RemotePipe.Listener {
 
     @Option(name="-s",usage="slient mode.")
     private boolean slient;
+    @Option(name="-d",usage="debug mode.")
+    private int debug = 1;
+
+
 
     public RemoteProxy() {
 //        this.publicPort = publicPort;
@@ -64,10 +68,10 @@ public class RemoteProxy implements SocketServer.Listener, RemotePipe.Listener {
     }
 
     private void start() throws IOException, InterruptedException {
-        if (slient) {
-            Logger.init(Logger.D);
-        } else {
+        if (debug > 0) {
             Logger.init(Logger.V);
+        } else {
+            Logger.init(Logger.E);
         }
 
         Logger.d("remote start");

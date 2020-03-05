@@ -91,6 +91,8 @@ public class LocalPipe {
 
                 } catch (Exception e) {
                     Logger.e(e);
+                    closeSafely(socket);
+                    closeSafely(remote);
                 }
 
                 finish++;

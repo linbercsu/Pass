@@ -35,6 +35,17 @@ public class TimeoutSocket extends Socket {
         asyncTimeout.enter();
     }
 
+    public synchronized void timeoutForClose(int seconds) {
+        if (isClosed())
+            return;
+
+        asyncTimeout.exit();
+
+        asyncTimeout.timeout(seconds, TimeUnit.SECONDS);
+
+        asyncTimeout.enter();
+    }
+
     private synchronized void markUnTimeout() {
         asyncTimeout.exit();
         asyncTimeout.enter();

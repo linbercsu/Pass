@@ -14,8 +14,8 @@ import okio.Source;
 public class RemotePipe {
     public static final int BUFFER_SIZE = 8192 * 5;
     final Listener listener;
-    final Socket worker;
-    private Socket client;
+    final TimeoutSocket worker;
+    private TimeoutSocket client;
     private volatile int finish;
 
     public interface Listener {
@@ -76,11 +76,11 @@ public class RemotePipe {
         closeSafely(worker);
     }
 
-    public synchronized void setClient(Socket client) {
+    public synchronized void setClient(TimeoutSocket client) {
         this.client = client;
     }
 
-    public synchronized Socket getClient() {
+    public synchronized TimeoutSocket getClient() {
         return client;
     }
 
@@ -139,6 +139,20 @@ public class RemotePipe {
 
         if (read == -1) {
             closeOutput(getClient());
+            /*
+             *下行通道关闭后，如果上行通道没有数据交互，就关闭socket，
+             * 如果不这样做，客户端可能复用这个处于半关闭状态下的socket，
+             * 导致客户端长时间等待。
+             */
+            timeoutSafely(getClient());
+        }
+    }
+
+    private void timeoutSafely(TimeoutSocket socket) {
+        try {
+            socket.timeoutForClose(2);
+        } catch (Exception e) {
+
         }
     }
 

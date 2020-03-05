@@ -10,7 +10,9 @@ dependencies {
 sourceCompatibility = "1.7"
 targetCompatibility = "1.7"
 
-task fatJar(type: Jar) {
+jar.dependsOn(':common:jar')
+
+task fatJar(type: Jar, dependsOn: ':RemoteProxy:jar') {
     manifest {
         attributes 'Implementation-Title': 'Remote proxy',
                 'Implementation-Version': '1.0',

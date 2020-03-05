@@ -7,10 +7,10 @@ public class Logger {
     public static final int V = 0;
     public static final int D = 1;
     public static final int E = 2;
-    private static int level = D;
+    private static int level = 3;
 
     public static void init(int logLevel) {
-        level = logLevel;
+//        level = logLevel;
     }
 
     public static void v(String message) {
@@ -35,7 +35,7 @@ public class Logger {
 
         String date = date();
         String format = String.format("D %s %s", date, message);
-        System.out.println(format);
+        System.err.println(format);
     }
 
     private static String date() {
@@ -63,6 +63,7 @@ public class Logger {
 
     public static void e(Throwable throwable) {
         e("exception------------>");
-        throwable.printStackTrace();
+//        throwable.printStackTrace();
+        System.err.println(throwable.getMessage());
     }
 }
