@@ -7,7 +7,7 @@ public class Logger {
     public static final int V = 0;
     public static final int D = 1;
     public static final int E = 2;
-    private static int level = 3;
+    private static int level = 2;
 
     public static void init(int logLevel) {
 //        level = logLevel;
@@ -64,6 +64,6 @@ public class Logger {
     public static void e(Throwable throwable) {
         e("exception------------>");
 //        throwable.printStackTrace();
-        System.err.println(throwable.getMessage());
+        throwable.printStackTrace(System.err);
     }
 }

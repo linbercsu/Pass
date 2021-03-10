@@ -4,6 +4,9 @@ import com.handy.common.Logger;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -15,7 +18,7 @@ import okio.Okio;
 public class RemoteControl implements Runnable, SocketServer.Listener {
     public static final long MAGIC_NUMBER = 1234567890l;
     private final int port;
-    private Socket client;
+    private List<Socket> clients = Collections.synchronizedList(new LinkedList<Socket>());
     private final ExecutorService executorService;
     private final Object lock;
     private volatile boolean requesting;
@@ -39,7 +42,7 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
             return;
 
         synchronized (lock) {
-            if (client == null)
+            if (clients.isEmpty())
                 return;
         }
 
@@ -48,20 +51,24 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
             @Override
             public void run() {
 
-                Socket client;
-                synchronized (lock) {
-                    if (RemoteControl.this.client == null)
-                        return;
-
-                    client = RemoteControl.this.client;
-                }
-
-                try {
-                    requestWorkInternal(client, count);
-                } catch (Exception e) {
-                    Logger.e(e);
+                while (true) {
+                    Socket client;
                     synchronized (lock) {
-                        closeSafely(client);
+                        if (clients.isEmpty())
+                            return;
+
+                        client = RemoteControl.this.clients.get(0);
+                    }
+
+                    try {
+                        requestWorkInternal(client, count);
+                        break;
+                    } catch (Exception e) {
+                        Logger.e(e);
+                        synchronized (lock) {
+                            closeSafely(client);
+                            RemoteControl.this.clients.remove(client);
+                        }
                     }
                 }
 
@@ -109,8 +116,13 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
     @Override
     public void onNewConnection(Socket socket) {
         synchronized (lock) {
-            closeSafely(client);
-            client = socket;
+            clients.add(socket);
+            if (clients.size() > 20) {
+                Socket remove = clients.remove(0);
+                closeSafely(remove);
+            }
+//            closeSafely(client);
+//            client = socket;
             lock.notifyAll();
         }
     }
