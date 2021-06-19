@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -37,13 +38,15 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
     }
 
     public void requestWork(final int count) {
-        Logger.d("requestWork %d %b", count, requesting);
+        Logger.e("requestWork %d %b", count, requesting);
         if (requesting)
             return;
 
         synchronized (lock) {
-            if (clients.isEmpty())
+            if (clients.isEmpty()) {
+                Logger.e("requestWork no client");
                 return;
+            }
         }
 
         requesting = true;
@@ -57,7 +60,8 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
                         if (clients.isEmpty())
                             return;
 
-                        client = RemoteControl.this.clients.get(0);
+                        int index = clients.size() - 1;
+                        client = RemoteControl.this.clients.get(index);
                     }
 
                     try {
@@ -78,14 +82,17 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
     }
 
     private void requestWorkInternal(Socket socket, int count) throws IOException {
-        Logger.d("requestWorkInternal %d", count);
+        Logger.e("requestWorkInternal %d", count);
         BufferedSink sink = Okio.buffer(Okio.sink(socket));
+        sink.timeout().timeout(10, TimeUnit.SECONDS);
+
         sink.writeLong(MAGIC_NUMBER);
 
         sink.writeInt(count);
         sink.flush();
 
         BufferedSource source = Okio.buffer(Okio.source(socket));
+        source.timeout().timeout(10, TimeUnit.SECONDS);
         long magic = source.readLong();
         if (magic != MAGIC_NUMBER) {
             throw new IOException("magic number error");
@@ -117,7 +124,7 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
     public void onNewConnection(Socket socket) {
         synchronized (lock) {
             clients.add(socket);
-            if (clients.size() > 20) {
+            if (clients.size() > 3) {
                 Socket remove = clients.remove(0);
                 closeSafely(remove);
             }

@@ -7,7 +7,7 @@ public class Logger {
     public static final int V = 0;
     public static final int D = 1;
     public static final int E = 2;
-    private static int level = 2;
+    private static int level = 0;
 
     public static void init(int logLevel) {
 //        level = logLevel;

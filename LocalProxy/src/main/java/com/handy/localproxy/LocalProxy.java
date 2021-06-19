@@ -33,11 +33,11 @@ public class LocalProxy implements LocalPipe.Listener, LocalControl.Listener {
     public static void main(String[] args) throws IOException {
         Logger.init(Logger.V);
 
-        String remoteHost = "192.168.8.135";
-        int remotePort = 8100;
-        String targetHost = "192.168.8.135";
-        int targetPort = 22;
-        int controlPort = 8563;
+        String remoteHost = "3.34.134.141";
+        int remotePort = 8101;
+        String targetHost = "172.18.0.17";
+        int targetPort = 8080;
+        int controlPort = 8564;
         if (args.length >= 4) {
             remoteHost = args[0];
             remotePort = Integer.valueOf(args[1]);

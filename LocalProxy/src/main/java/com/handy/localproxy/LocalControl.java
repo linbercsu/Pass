@@ -54,7 +54,7 @@ public class LocalControl implements Runnable {
 
     private void listen() throws IOException {
 //        socket = new Socket(host, port, null, 0);
-        Logger.d("connect to server.");
+        Logger.d("connect to server." + host + " " + port);
         try {
             socket = new Socket(host, port, null, 0);
         } catch (Exception e) {
