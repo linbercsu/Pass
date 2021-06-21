@@ -54,29 +54,31 @@ public class RemoteControl implements Runnable, SocketServer.Listener {
             @Override
             public void run() {
 
-                while (true) {
-                    Socket client;
-                    synchronized (lock) {
-                        if (clients.isEmpty())
-                            return;
-
-                        int index = clients.size() - 1;
-                        client = RemoteControl.this.clients.get(index);
-                    }
-
-                    try {
-                        requestWorkInternal(client, count);
-                        break;
-                    } catch (Exception e) {
-                        Logger.e(e);
+                try {
+                    while (true) {
+                        Socket client;
                         synchronized (lock) {
-                            closeSafely(client);
-                            RemoteControl.this.clients.remove(client);
+                            if (clients.isEmpty())
+                                return;
+
+                            int index = clients.size() - 1;
+                            client = RemoteControl.this.clients.get(index);
+                        }
+
+                        try {
+                            requestWorkInternal(client, count);
+                            break;
+                        } catch (Exception e) {
+                            Logger.e(e);
+                            synchronized (lock) {
+                                closeSafely(client);
+                                RemoteControl.this.clients.remove(client);
+                            }
                         }
                     }
+                } finally {
+                    requesting = false;
                 }
-
-                requesting = false;
             }
         });
     }
