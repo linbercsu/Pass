@@ -19,20 +19,20 @@ function stop()
 function start() 
 {
     #git
-    watch 'java -jar RemoteProxy-all.jar -p 8222 -w 8102 -c 8566 -d 0 1>passgit.log 2>passgit.log' &
+    #watch 'java -jar RemoteProxy-all.jar -p 8222 -w 8102 -c 8566 -d 0 1>passgit.log 2>passgit.log' &
 
     #jenkins
     #watch 'java -jar RemoteProxy-all.jar -p 8080 -w 8101 -c 8564  -d 0 1>passjenkins.log 2>passjenkins.log' &
     watch 'java -jar RemoteProxy-all.jar -p 8080 -w 8101 -c 8564  -d 0' &
 
     #nexus
-    watch 'java -jar RemoteProxy-all.jar -p 8098 -w 8100 -c 8563 -d 0 1>passnexus.log 2>passnexus.log' &
+    #watch 'java -jar RemoteProxy-all.jar -p 8098 -w 8100 -c 8563 -d 0 1>passnexus.log 2>passnexus.log' &
 
     #ssh
-    watch 'java -jar RemoteProxy-all.jar -p 8322 -w 8109 -c 8569 -d 0 1>passssh.log 2>passssh.log' &
+    #watch 'java -jar RemoteProxy-all.jar -p 8322 -w 8109 -c 8569 -d 0 1>passssh.log 2>passssh.log' &
    
     #gitlab
-    watch 'java -jar RemoteProxy-all.jar -p 2234 -w 8108 -c 8562 -d 0 1>gitlab.log 2>gitlab.log' &
+    #watch 'java -jar RemoteProxy-all.jar -p 2234 -w 8108 -c 8562 -d 0 1>gitlab.log 2>gitlab.log' &
 }
 
 echo "app ......"

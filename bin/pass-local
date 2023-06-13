@@ -38,7 +38,7 @@ function start()
     #watch "java -jar ./LocalProxy-all.jar $IP 8108 172.18.0.6 2234 8562 1>gitlablog.txt 3>gitlablog.txt" &
     
     #jenkins
-    watch "java -jar ./LocalProxy-all.jar ${IP} 8101 localhost 8080 8564 1>passjenkins.log 2>passjenkins.log" &
+    watch "java -jar ./LocalProxy-all.jar --remote ${IP} --remote-port 8101 --target localhost --target-port 8080 --control-port 8564 --log-level 2 1>passjenkins.log 2>passjenkins.log" &
 
 
 }

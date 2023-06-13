@@ -28,28 +28,39 @@ public class LocalProxy implements LocalPipe.Listener, LocalControl.Listener {
         this.controlPort = controlPort;
     }
 
-    //java -jar LocalProxy-all.jar 18.223.238.245 8100 localhost 8098
+    private static String findParameter(String[] args, String key) {
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+            if (arg.equals(key)) {
+                return args[i+1];
+            }
+        }
+
+        return "";
+    }
+
+    private static String findParameter(String[] args, String key, String defaultValue) {
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+            if (arg.equals("--" + key)) {
+                return args[i+1];
+            }
+        }
+
+        return defaultValue;
+    }
+
+    //java -jar LocalProxy-all.jar --remote 18.223.238.245 --remote-port 8100 --target localhost --target-port 8098 --control-port 8564 --log-level 2
 
     public static void main(String[] args) throws IOException {
-        Logger.init(Logger.V);
+        int logLevel = Integer.parseInt(findParameter(args, "--log-level", "2"));
+        Logger.init(logLevel);
 
-        String remoteHost = "3.34.134.141";
-        int remotePort = 8101;
-        String targetHost = "172.18.0.17";
-        int targetPort = 8080;
-        int controlPort = 8564;
-        if (args.length >= 4) {
-            remoteHost = args[0];
-            remotePort = Integer.valueOf(args[1]);
-            targetHost = args[2];
-            targetPort = Integer.valueOf(args[3]);
-        }
-
-        if (args.length >= 5) {
-            controlPort = Integer.valueOf(args[4]);
-        }
-
-
+        String remoteHost = findParameter(args, "--remote");
+        int remotePort = Integer.parseInt(findParameter(args, "--remote-port"));
+        String targetHost = findParameter(args, "--target");
+        int targetPort = Integer.parseInt(findParameter(args, "--target-port"));
+        int controlPort = Integer.parseInt(findParameter(args, "--control-port"));
 
         new LocalProxy(remoteHost, remotePort, targetHost, targetPort, controlPort).start();
     }

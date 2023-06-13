@@ -10,7 +10,7 @@ public class Logger {
     private static int level = 0;
 
     public static void init(int logLevel) {
-//        level = logLevel;
+        level = logLevel;
     }
 
     public static void v(String message) {
