@@ -1,0 +1,57 @@
+#! /bin/bash
+
+## start app command is following.
+## ./pass-local
+## 
+## stop app command is following.
+## ./pass-local stop
+
+function stop()
+{
+    PIDARRAY=`ps -ax |grep "LocalProxy-all.jar" | awk '{print $1}'`
+    for PID in $PIDARRAY 
+    do
+    echo $PID
+    kill -9 $PID
+    done
+}
+
+function start() 
+{
+    #IP=3.34.134.141
+    #IP=13.232.78.227
+    IP=15.206.173.246
+    #jenkins
+    #java -jar ./LocalProxy-all.jar ${IP} 8101 localhost 8080 8564 1>passjenkins.log 2>passjenkins.log
+    #watch "java -jar ./LocalProxy-all.jar ${IP} 8101 localhost 8080 8564 1>passjenkins.log 2>passjenkins.log" &
+
+    #nexus
+    #watch "java -jar ./LocalProxy-all.jar ${IP} 8100 172.18.0.6 8098 8563  -s 1>log.txt 2>log.txt" &
+
+    #git
+    #watch "java -jar ./LocalProxy-all.jar $IP 8102 172.18.0.6 8222 8566 1>gitlog.txt 2>gitlog.txt" &
+
+    #ssh
+    #watch "java -jar ./LocalProxy-all.jar $IP 8109 172.18.0.6 22 8569 1>sshlog.txt 2>sshlog.txt"  &
+
+    #gitlab
+    #watch "java -jar ./LocalProxy-all.jar $IP 8108 172.18.0.6 2234 8562 1>gitlablog.txt 3>gitlablog.txt" &
+    
+    #jenkins
+    watch "java -jar ./LocalProxy-all.jar ${IP} 8101 localhost 8080 8564 1>passjenkins.log 2>passjenkins.log" &
+
+
+}
+
+echo "pass ......"
+PARAM=$1
+echo "parameter is ${PARAM}"
+if [ $PARAM = "stop" ]
+ then 
+    echo "stop"
+    stop
+ else 
+    echo "start"
+    start
+ fi
+
